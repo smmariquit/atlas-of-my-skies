@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --background: #ffffff;
@@ -22,5 +25,50 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+h1 {
+  /* Use Playfair Display (serif) for a sophisticated look; fall back to serif */
+  font-family: var(--font-playfair), Georgia, "Times New Roman", Times, serif;
+}
+
+
+
+/* Prevent horizontal scrolling caused by full-width elements and scrollbar shifts */
+html, body {
+  overflow-x: hidden;
+}
+
+:root {
+  --sb-track: transparent;
+  --sb-thumb: rgba(100, 100, 100, 0.5);
+  --sb-thumb-hover: rgba(150, 150, 150, 0.7);
+}
+
+::-webkit-scrollbar{
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--sb-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--sb-thumb);
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--sb-thumb-hover);
+}
+
+/* Accessibility fallback: if user requests high contrast, disable blend effects for readability */
+@media (prefers-contrast: more), (prefers-contrast: high) {
+  .mix-blend-difference,
+  .mix-blend-exclusion {
+    mix-blend-mode: normal !important;
+    /* ensure readable color in high contrast mode */
+    color: var(--foreground) !important;
+  }
 }
