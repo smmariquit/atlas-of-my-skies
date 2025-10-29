@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Atlas of my skies preview">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0ea5e9" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="cloud" x1="0" x2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#e6f7ff" stop-opacity="0.95"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+
+  <!-- Cloud motif -->
+  <g transform="translate(220,180)">
+    <ellipse cx="340" cy="150" rx="220" ry="120" fill="url(#cloud)" />
+    <circle cx="240" cy="150" r="110" fill="url(#cloud)" />
+    <circle cx="380" cy="80" r="90" fill="url(#cloud)" />
+  </g>
+
+  <!-- Title -->
+  <text x="640" y="340" text-anchor="middle" font-family="Playfair Display, serif" font-weight="700" font-size="56" fill="#ffffff">Atlas of my skies</text>
+  <text x="640" y="400" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="28" fill="#e6f7ff" opacity="0.9">a personal atlas of photos, dates, and places</text>
+</svg>

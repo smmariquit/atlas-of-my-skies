@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import imagesMeta from "../data/imagesMeta.json";
+import Link from "next/link";
 
 export default function Home() {
   // use metadata list; each item includes src and empty metadata fields
@@ -341,8 +342,10 @@ export default function Home() {
           {selected === null ? (
             // Hero content when nothing is selected
             <div className="text-center">
-              <h1 className="text-4xl font-extrabold tracking-tight">Atlas of my skies</h1>
+              <h1 className="text-4xl font-extrabold tracking-tight">atlas of my skies</h1>
               <p className="mt-2 opacity-80">the heavens tell a profound story each time. it carries the weight of the world. it serves as a ever-present reminder that the world is still turning. it is the canvas of our dreams :)</p>
+              <p className="mt-2 opacity-40">(click a sky to see its story)</p>
+              <p className="mt-2">- stim <Link href="https://instagram.com/friedicecrm">(ig)</Link> <Link href="https://linkedin.com/in/stimmie">in</Link> <Link href="https://stimmie.dev">web</Link></p>
             </div>
           ) : (
             images[selected] && (
