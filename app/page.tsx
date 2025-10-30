@@ -176,10 +176,15 @@ export default function Home() {
 
 
   const [hovered, setHovered] = useState<number | null>(null);
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [heroMinimized, setHeroMinimized] = useState(false);
+  const [mapMode, setMapMode] = useState(false);
   // refs to each tile so we can compute popup position (avoid clipping)
   const tileRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const [popup, setPopup] = useState<null | { index: number; left: number; top: number; width: number }>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapInstanceRef = useRef<any>(null);
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
 
   const scrollBySection = (dir: number) => {
     const el = scrollContainerRef.current;
@@ -225,8 +230,125 @@ export default function Home() {
     // clicking should show centered panel and cancel any pending hide
     cancelHide();
     setPopup(null);
+    // if the hero is minimized, expand it so details are visible
+    setHeroMinimized(false);
     setSelected(i);
   };
+
+  // derive a sorted copy of images based on date
+  const sortedImages = useMemo(() => {
+    const copy = [...images];
+    copy.sort((a, b) => {
+      const da = a.date ? Date.parse(a.date) : 0;
+      const db = b.date ? Date.parse(b.date) : 0;
+      return sortOrder === 'desc' ? db - da : da - db;
+    });
+    return copy;
+  }, [images, sortOrder]);
+
+  // small utility to escape HTML for popup content (used by map popups)
+  const escapeHtml = (s: string) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  // load Leaflet (via CDN) on demand and initialize interactive map when mapMode is enabled
+  useEffect(() => {
+    if (!mapMode) {
+      // destroy map if exists
+      if (mapInstanceRef.current) {
+        try {
+          mapInstanceRef.current.remove();
+        } catch (e) {
+          // ignore
+        }
+        mapInstanceRef.current = null;
+      }
+      return;
+    }
+
+    // helper to inject stylesheet/script
+    const ensureLeaflet = () => {
+      return new Promise<void>((resolve) => {
+        // CSS
+        if (!document.getElementById('leaflet-css')) {
+          const link = document.createElement('link');
+          link.id = 'leaflet-css';
+          link.rel = 'stylesheet';
+          link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+          document.head.appendChild(link);
+        }
+        // JS
+        if ((window as any).L) {
+          resolve();
+          return;
+        }
+        if (!document.getElementById('leaflet-js')) {
+          const script = document.createElement('script');
+          script.id = 'leaflet-js';
+          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+          script.onload = () => resolve();
+          document.body.appendChild(script);
+        } else {
+          // already loading; poll for L
+          const t = setInterval(() => {
+            if ((window as any).L) {
+              clearInterval(t);
+              resolve();
+            }
+          }, 100);
+        }
+      });
+    };
+
+    let mounted = true;
+    ensureLeaflet().then(() => {
+      if (!mounted) return;
+      const L = (window as any).L;
+      if (!L || !mapContainerRef.current) return;
+      // choose initial center: first image with coords or 0,0
+      const first = sortedImages.find((it) => it.latitude != null && it.longitude != null);
+      const center: [number, number] = first ? [first.latitude as number, first.longitude as number] : [0, 0];
+      const map = L.map(mapContainerRef.current).setView(center, first ? 8 : 2);
+      mapInstanceRef.current = map;
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors',
+      }).addTo(map);
+      // When the map is placed in a constrained panel it may need an explicit invalidateSize
+      // so Leaflet can lay out tiles correctly.
+      setTimeout(() => {
+        try {
+          map.invalidateSize();
+        } catch (e) {}
+      }, 120);
+
+      // add markers for each image that has coords
+      sortedImages.forEach((it, idx) => {
+        if (it.latitude != null && it.longitude != null) {
+          const marker = L.marker([it.latitude as number, it.longitude as number]).addTo(map);
+          const thumb = it.src || '';
+          const title = it.title || '';
+          const dateStr = formatDate(it.date, true) || '';
+          const popupHtml = ` <div style="min-width:160px"><strong>${escapeHtml(title)}</strong><div style="font-size:12px;color:#666">${escapeHtml(dateStr)}</div><div style="margin-top:6px"><img src='${thumb}' style='width:100%;height:auto;object-fit:cover' /></div></div>`;
+          marker.bindPopup(popupHtml);
+          marker.on('click', () => {
+            // open selected detail for this image index (sortedImages index)
+            setSelected(idx);
+          });
+        }
+      });
+    });
+
+    return () => {
+      mounted = false;
+      if (mapInstanceRef.current) {
+        try {
+          mapInstanceRef.current.remove();
+        } catch (e) {}
+        mapInstanceRef.current = null;
+      }
+    };
+  }, [mapMode, sortedImages]);
+
+  
 
   // clear any pending timeouts when unmounting
   useEffect(() => {
@@ -245,7 +367,7 @@ export default function Home() {
         className="relative grid w-full mx-auto"
         style={{ zIndex: 0, gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: '0.5rem' }}
       >
-        {images.map((item, i) => (
+        {sortedImages.map((item, i) => (
           <motion.div
             key={i}
             ref={(el) => { tileRefs.current[i] = el; }}
@@ -274,6 +396,31 @@ export default function Home() {
         ))}
       </motion.div>
 
+      {/* Small control cluster: sort, toggle map mode, minimize hero */}
+      <div className="fixed top-4 right-4 z-60 pointer-events-auto flex gap-2">
+        <button
+          className="bg-gray-500 text-white text-xs px-2 py-1 rounded shadow-sm hover:bg-white/10"
+          onClick={() => setSortOrder((s) => (s === 'desc' ? 'asc' : 'desc'))}
+          title="Sort by date"
+        >
+          {sortOrder === 'desc' ? 'Latest' : 'Oldest'}
+        </button>
+        <button
+          className="bg-gray-500 text-white text-xs px-2 py-1 rounded shadow-sm hover:bg-white/10"
+          onClick={() => setMapMode((m) => !m)}
+          title="Toggle Map Mode"
+        >
+          Map
+        </button>
+        <button
+          className="bg-gray-500 text-white text-xs px-2 py-1 rounded shadow-sm hover:bg-white/10"
+          onClick={() => setHeroMinimized((v) => !v)}
+          title="Minimize hero"
+        >
+          {heroMinimized ? 'Expand' : 'Minimize'}
+        </button>
+      </div>
+
       {/* Fixed overlay for the hover popup (so it's not clipped by tile overflow) */}
       <div className="fixed inset-0 pointer-events-none z-50">
         {popup && images[popup.index] && (
@@ -293,15 +440,15 @@ export default function Home() {
               scheduleHide();
             }}
           >
-            <h3 className="font-bold text-sm truncate">{images[popup.index].title || "Title"}</h3>
-            { images[popup.index].description != "" ? <p className="text-xs mt-1 line-clamp-3">{images[popup.index].description}</p> : null }
-            <div className="text-xs mt-2 opacity-80">{formatDate(images[popup.index].date) || "Date"}</div>
+            <h3 className="font-bold text-sm truncate">{sortedImages[popup.index].title || "Title"}</h3>
+            { sortedImages[popup.index].description != "" ? <p className="text-xs mt-1 line-clamp-3">{sortedImages[popup.index].description}</p> : null }
+            <div className="text-xs mt-2 opacity-80">{formatDate(sortedImages[popup.index].date) || "Date"}</div>
 
             <div className="mt-2 h-16 bg-white/5 rounded-md overflow-hidden flex items-center justify-center mx-auto w-full">
-              {images[popup.index].latitude != null && images[popup.index].longitude != null ? (
+              {sortedImages[popup.index].latitude != null && sortedImages[popup.index].longitude != null ? (
                 (() => {
-                  const lat = images[popup.index].latitude;
-                  const lon = images[popup.index].longitude;
+                  const lat = sortedImages[popup.index].latitude;
+                  const lon = sortedImages[popup.index].longitude;
                   const zoom = 13;
                   // size: width x height (pixels) - match approx w-72 (288px) x 64px
                   const width = 280;
@@ -338,17 +485,9 @@ export default function Home() {
           }}
         />
 
-  <div className="relative pointer-events-auto bg-gray-800/70 text-white p-4 rounded w-11/12 sm:w-72 md:w-80 backdrop-blur-sm">
-          {selected === null ? (
-            // Hero content when nothing is selected
-            <div className="text-center">
-              <h1 className="text-4xl font-extrabold tracking-tight">atlas of my skies</h1>
-              <p className="mt-2 opacity-80">the heavens tell a profound story each time. it carries the weight of the world. it serves as a ever-present reminder that the world is still turning. it is the canvas of our dreams :)</p>
-              <p className="mt-2 opacity-40">(click a sky to see its story)</p>
-              <p className="mt-2">- stim <Link href="https://instagram.com/friedicecrm">(ig)</Link> <Link href="https://linkedin.com/in/stimmie">in</Link> <Link href="https://stimmie.dev">web</Link></p>
-            </div>
-          ) : (
-            images[selected] && (
+  <div className={`relative pointer-events-auto bg-gray-800/70 text-white p-4 rounded backdrop-blur-sm ${heroMinimized ? 'w-20 sm:w-28 md:w-32' : 'w-11/12 sm:w-72 md:w-80'} ${heroMinimized ? 'invisible' : ''}`}>
+          {selected !== null ? (
+            sortedImages[selected] && (
               <div>
                 <button
                   className="absolute top-2 right-2 text-white/80 hover:text-white"
@@ -357,15 +496,15 @@ export default function Home() {
                 >
                   ×
                 </button>
-        <h3 className="font-bold text-sm truncate">{images[selected].title || "Title"}</h3>
-      { images[selected].description != "" ? <p className="text-xs mt-1 line-clamp-3">{images[selected].description}</p> : null }
-        <div className="text-xs mt-2 opacity-80">{formatDate(images[selected].date, true) || "Date"}</div>
+                <h3 className="font-bold text-sm truncate">{sortedImages[selected].title || "Title"}</h3>
+                { sortedImages[selected].description != "" ? <p className="text-xs mt-1 line-clamp-3">{sortedImages[selected].description}</p> : null }
+                <div className="text-xs mt-2 opacity-80">{formatDate(sortedImages[selected].date, true) || "Date"}</div>
 
                 <div className="mt-3 h-50 bg-white/5 rounded-md overflow-hidden flex items-center justify-center">
-                  {images[selected].latitude != null && images[selected].longitude != null ? (
+                  {sortedImages[selected].latitude != null && sortedImages[selected].longitude != null ? (
                     (() => {
-                      const lat = images[selected].latitude;
-                      const lon = images[selected].longitude;
+                      const lat = sortedImages[selected].latitude;
+                      const lon = sortedImages[selected].longitude;
                       const zoom = 13;
                       const width = 320;
                       const height = 320;
@@ -387,9 +526,37 @@ export default function Home() {
                 </div>
               </div>
             )
+          ) : heroMinimized ? (
+            <div className="flex items-center justify-center width">
+              <button className="px-3 py-1 text-sm rounded bg-white/6 hover:bg-white/10" onClick={() => setHeroMinimized(false)}>+</button>
+            </div>
+          ) : (
+            // Hero content when nothing is selected
+            <div className="text-center">
+              <div className="flex justify-end">
+                <button className="text-xs text-white/70 hover:text-white" onClick={() => setHeroMinimized(true)} aria-label="Minimize hero">—</button>
+              </div>
+              <h1 className="text-4xl font-extrabold tracking-tight">atlas of my skies</h1>
+              <p className="mt-2 opacity-80">the heavens tell a profound story each time. it carries the weight of the world. it serves as a ever-present reminder that the world is still turning. it is the canvas of our dreams :)</p>
+              <p className="mt-2 opacity-40">(click a sky to see its story)</p>
+              <p className="mt-2">- stim <Link href="https://instagram.com/friedicecrm">(ig)</Link> <Link href="https://linkedin.com/in/stimmie">(in)</Link> <Link href="https://stimmie.dev">(web)</Link></p>
+            </div>
           )}
         </div>
       </div>
+
+      {mapMode && (
+        <div className="fixed inset-0 z-70 pointer-events-auto flex items-center justify-center">
+          {/* backdrop - clicking it closes the map */}
+          <div className="absolute inset-0 bg-black/60" onClick={() => setMapMode(false)} />
+          <div className="relative bg-gray-900 rounded-lg overflow-hidden w-11/12 md:w-3/4 lg:w-2/3 h-[70vh] shadow-xl">
+            <div className="flex justify-end p-2">
+              <button className="bg-white/6 text-white px-3 py-1 rounded" onClick={() => setMapMode(false)}>Close</button>
+            </div>
+            <div ref={mapContainerRef} style={{ height: 'calc(100% - 40px)', minHeight: 0 }} id="map" />
+          </div>
+        </div>
+      )}
 
       {/* CRT overlay: placed between the image grid and the UI overlay so it affects the images underneath
           Increase z-index so it's visible again (keeps popups at z-50 above it). */}
