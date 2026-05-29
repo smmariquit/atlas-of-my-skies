@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Atlas of My Skies 🌌
 
-## Getting Started
+![Next.js](https://img.shields.io/badge/Next.js-black?style=for-the-badge&logo=next.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 
-First, run the development server:
+A meditative, digital astronomy diary that maps the sky above me each day. A quiet intersection of photography, personal reflection, and code.
+
+## 🔭 About the Project
+
+*Atlas of My Skies* is a personal web project built to document astrophotography, stargazing logs, and astronomical events. The platform is designed to be minimalistic and focus heavily on the imagery and the storytelling.
+
+- **Stack:** Built with Next.js 14+ (App Router), React, and TypeScript.
+- **Deployment:** Hosted on Vercel for fast edge delivery of static assets and images.
+- **Design:** Custom minimalist aesthetics, dark mode by default to match the night sky.
+
+## 🚀 Getting Started
+
+To run this project locally:
 
 ```bash
+# 1. Clone the repository
+git clone https://github.com/smmariquit/atlas-of-my-skies.git
+cd atlas-of-my-skies
+
+# 2. Install dependencies
+npm install
+
+# 3. Start the development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser to view the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🗺️ Architecture
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```mermaid
+graph TD
+    User((User)) -->|Visits Site| Vercel[Vercel Edge Network]
+    Vercel -->|Serves| Next[Next.js App Router]
+    Next -->|Renders| UI[React Server Components]
+    UI -->|Loads| Static[Static MDX / JSON Content]
+    UI -->|Optimizes| Images[Next/Image Component]
+```
 
-## Learn More
+## 📄 License
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is open-source under the MIT License, though the photography and written content remain copyrighted by the author.
