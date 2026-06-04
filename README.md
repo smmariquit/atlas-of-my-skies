@@ -46,3 +46,7 @@ graph TD
 ## 📄 License
 
 This project is open-source under the MIT License, though the photography and written content remain copyrighted by the author.
+
+
+---
+*If this project helped you out, consider [treating me to a coffee](https://kape.stimmie.dev) ☕*
