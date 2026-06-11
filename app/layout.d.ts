@@ -1,3 +1,5 @@
+// app/layout.d.ts
+
 import type { Metadata } from "next";
 import "./globals.css";
 export declare const metadata: Metadata;

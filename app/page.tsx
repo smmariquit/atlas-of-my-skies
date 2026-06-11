@@ -1,3 +1,5 @@
+// app/page.tsx
+
 "use client";
 import React, { useRef, useMemo, useState, useEffect } from "react";
 import Image from "next/image";

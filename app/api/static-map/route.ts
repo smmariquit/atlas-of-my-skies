@@ -1,3 +1,5 @@
+// app/api/static-map/route.ts
+
 import { NextResponse } from 'next/server';
 
 export async function GET(req: Request) {
