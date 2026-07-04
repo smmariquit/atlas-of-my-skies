@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# accidental tsc emit in app/
+app/**/*.js
+app/**/*.d.ts
+!app/**/*.config.js
+app/**/*.map
