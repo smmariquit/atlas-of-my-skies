@@ -36,11 +36,11 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to view th
 
 ```mermaid
 graph TD
-    User((User)) -->|Visits Site| Vercel[Vercel Edge Network]
-    Vercel -->|Serves| Next[Next.js App Router]
-    Next -->|Renders| UI[React Server Components]
-    UI -->|Loads| Static[Static MDX / JSON Content]
-    UI -->|Optimizes| Images[Next/Image Component]
+ User((User)) -->|Visits Site| Vercel[Vercel Edge Network]
+ Vercel -->|Serves| Next[Next.js App Router]
+ Next -->|Renders| UI[React Server Components]
+ UI -->|Loads| Static[Static MDX / JSON Content]
+ UI -->|Optimizes| Images[Next/Image Component]
 ```
 
 ## 📄 License
