@@ -3,6 +3,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import "./globals.css";
+import LegalMicroLink from "../components/LegalMicroLink";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -65,6 +66,20 @@ export default function RootLayout({
   <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable}`}>
       <body className="antialiased">
         {children}
+        <nav
+          className="fixed bottom-3 right-3 z-50 flex items-center gap-1.5 pointer-events-auto"
+          aria-label="Legal"
+        >
+          <LegalMicroLink href="/privacy" subtle>
+            privacy
+          </LegalMicroLink>
+          <span className="text-[9px] text-slate-500/30 dark:text-slate-400/25" aria-hidden="true">
+            ·
+          </span>
+          <LegalMicroLink href="/terms" subtle>
+            terms
+          </LegalMicroLink>
+        </nav>
       </body>
     </html>
   );
